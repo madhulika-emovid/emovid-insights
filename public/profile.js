@@ -43,12 +43,24 @@ function render(data) {
     )
     .join("");
 
-  const themesHtml = (narrative.usageThemes || [])
+  let themesHtml = (narrative.usageThemes || [])
     .map(
       (t) =>
         `<p><strong>${escapeHtml(t.name)}</strong> (${fmt(t.sendCount)} sends) — ${escapeHtml(t.description)}</p>`
     )
     .join("");
+
+  // Fallback if the AI came back with no themes (e.g. too little data to
+  // group meaningfully) but there's no hard error either -- fall back to
+  // just listing the real messages we have rather than showing nothing.
+  if (!themesHtml && !narrative.error && profile.topEngagement.length > 0) {
+    themesHtml =
+      '<p class="hint">Not enough activity to identify usage patterns -- showing the raw message(s) on file instead.</p>' +
+      profile.topEngagement
+        .slice(0, 5)
+        .map((r) => `<p><strong>${r.date}</strong> (${escapeHtml(r.type)}) — ${escapeHtml(r.observation || "No description available.")}</p>`)
+        .join("");
+  }
 
   // Deterministic key-observation facts, computed in the browser from the
   // exact backend numbers -- not AI-written.

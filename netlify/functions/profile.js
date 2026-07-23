@@ -40,7 +40,12 @@ Respond ONLY with a JSON object of this shape:
     "1-2 sentence bullet insight not already covered by the numeric facts you were given verbatim -- qualitative color only"
   ]
 }
-Keep usageThemes to at most 5, ordered by sendCount descending. Keep additionalObservations to at most 3.`;
+Keep usageThemes to at most 5, ordered by sendCount descending. Keep additionalObservations to at most 3.
+
+Important: usageThemes must NEVER be empty if at least one message cluster was
+given above. If there's only one cluster, or the clusters don't obviously
+group into multiple themes, just describe the single cluster (or each small
+cluster individually) as its own theme rather than returning an empty list.`;
 }
 
 exports.handler = async (event) => {
