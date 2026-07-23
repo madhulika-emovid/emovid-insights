@@ -65,7 +65,11 @@ public/
    functions on any Netlify site, no extra setup or add-on needed.
 5. **Set the environment variable**: Site configuration -> Environment
    variables -> add `GEMINI_API_KEY` with your key. (Optional: `GEMINI_MODEL`
-   to override the default `gemini-2.5-flash`.)
+   to override the default `gemini-3.5-flash`. Google deprecates models for
+   new API users periodically -- if you start seeing 404 "no longer
+   available to new users" errors, check
+   https://ai.google.dev/gemini-api/docs/models for the current stable
+   model name and update this env var.)
 6. **Password-protect the site** (since it's just you + a few teammates):
    Site configuration -> Visitor access -> Password protection -> set a
    shared password. This is enough for internal use; skip real auth.
@@ -111,7 +115,7 @@ file — `netlify dev` reads it automatically) for the custom-question feature.
   dataset grows much larger, swap the Blobs+in-memory approach for a real
   database.
 - Gemini's free tier (as of mid-2026) is roughly 1,500 requests/day and
-  ~1,000,000 tokens/minute for `gemini-2.5-flash` — plenty for a few
+  ~1,000,000 tokens/minute for `gemini-3.5-flash` — plenty for a few
   teammates using the dashboard and profile lookups. If you ever see rate
   limit errors, they're most likely from the low requests-per-minute cap
   (~10-15/min), not the daily or token limits.

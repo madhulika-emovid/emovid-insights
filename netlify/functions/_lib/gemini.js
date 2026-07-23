@@ -1,4 +1,8 @@
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+// gemini-2.5-flash was deprecated for new API users -- gemini-3.5-flash is
+// the current stable, free-tier-eligible model as of mid-2026. Use
+// gemini-3.5-flash-lite (set GEMINI_MODEL) if you hit rate limits, it has
+// higher free-tier headroom at slightly lower narrative quality.
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
 
 // Same shape as the old Groq helper it replaces: { system, user, jsonMode }
 // in, plain text (or a JSON string when jsonMode) out.
