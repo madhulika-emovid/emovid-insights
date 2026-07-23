@@ -17,6 +17,14 @@ by an LLM (Groq).
   query spec (never raw numbers). That spec is executed against the real
   dataset, and the exact result is what gets phrased back into an answer —
   so the AI can't hallucinate numbers, only pick the wrong query.
+- **User profile report**: the "User Profile" page (`profile.html`) looks up
+  one user by email and shows a full activity write-up. All numbers (totals,
+  per-type breakdown, monthly volume, top-engagement table, biggest
+  mail-merge blast) are computed in `netlify/functions/_lib/profileEngine.js`
+  directly from the data. Only the "How they use Emovid" theme write-up and a
+  couple of extra qualitative bullets are AI-generated (`profile.js`), and
+  the AI is only ever handed those exact pre-computed numbers plus the raw
+  message clusters — it narrates and groups, it doesn't invent totals.
 
 ## Project layout
 
@@ -28,13 +36,16 @@ netlify/functions/
     blobs.js        Netlify Blobs read/write helpers
     dataset.js      Loads + merges all months, tiny in-memory cache
     queryEngine.js  The filter/groupBy/metric DSL executor
+    profileEngine.js Exact per-user stats + message clustering
     groq.js         Groq chat completion helper
   upload.js   POST { csvText, filename, month? } -> stores a month's blob
   months.js   GET -> list of months on file
   query.js    GET ?list=1 -> catalog; POST { questionId, monthFrom?, monthTo? } -> result
   ask.js      POST { question } -> { answer, spec, result }
+  profile.js  POST { email } -> { profile (exact facts), narrative (AI) }
 public/
   index.html, app.js   Dashboard
+  profile.html, profile.js   User profile report
   upload.html, upload.js   Upload page
   style.css
 ```

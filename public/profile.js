@@ -1,0 +1,136 @@
+const emailInput = document.getElementById("emailInput");
+const lookupBtn = document.getElementById("lookupBtn");
+const statusEl = document.getElementById("status");
+const report = document.getElementById("report");
+
+function fmt(n) {
+  return typeof n === "number" ? n.toLocaleString() : n;
+}
+
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+function planLine(profile) {
+  if (profile.isPlanConsistent) {
+    const p = profile.planCombos[0];
+    return `Consistent plan throughout — ${escapeHtml(p.activePlan)}, ${escapeHtml(p.planTier)} tier`;
+  }
+  return profile.planCombos
+    .map((p) => `${escapeHtml(p.activePlan)} (${escapeHtml(p.planTier)})`)
+    .join(" → ");
+}
+
+function render(data) {
+  const { profile, narrative } = data;
+
+  const statsRows = [
+    ["Total Emovids Sent", fmt(profile.totals.sent)],
+    ["Active Days", fmt(profile.totals.activeDays)],
+    ["Total Views", fmt(profile.totals.views)],
+    ["Total Plays", fmt(profile.totals.plays)],
+    ["Total Replies", fmt(profile.totals.replies)],
+    ["Avg Views/Emovid", fmt(profile.totals.avgViewsPerEmovid)],
+    ["Play-through Rate", `${profile.totals.playThroughRate}%`],
+  ]
+    .map(([label, value]) => `<tr><td>${label}</td><td>${value}</td></tr>`)
+    .join("");
+
+  const engagementRows = profile.topEngagement
+    .map(
+      (r) =>
+        `<tr><td>${r.date}</td><td>${escapeHtml(r.type)}</td><td>${fmt(r.views)}</td><td>${fmt(r.plays)}</td><td>${fmt(r.replies)}</td></tr>`
+    )
+    .join("");
+
+  const themesHtml = (narrative.usageThemes || [])
+    .map(
+      (t) =>
+        `<p><strong>${escapeHtml(t.name)}</strong> (${fmt(t.sendCount)} sends) — ${escapeHtml(t.description)}</p>`
+    )
+    .join("");
+
+  // Deterministic key-observation facts, computed in the browser from the
+  // exact backend numbers -- not AI-written.
+  const deterministicObs = [];
+  if (profile.peakMonth) {
+    deterministicObs.push(
+      `${profile.peakMonth.month} alone accounts for ${fmt(profile.peakMonth.sent)} of ${fmt(profile.totals.sent)} total sends (${profile.peakMonthShare}%).`
+    );
+  }
+  if (profile.biggestBlast) {
+    deterministicObs.push(
+      `Largest single mass-send: "${escapeHtml(profile.biggestBlast.text.slice(0, 140))}${profile.biggestBlast.text.length > 140 ? "…" : ""}" went out ${fmt(profile.biggestBlast.count)} times (${profile.biggestBlast.firstDate}${profile.biggestBlast.firstDate !== profile.biggestBlast.lastDate ? " to " + profile.biggestBlast.lastDate : ""}).`
+    );
+  }
+  if (profile.byType.length > 1) {
+    const byTypeStr = profile.byType
+      .map((t) => `${t.type}: ${fmt(t.count)} sends, ${fmt(t.views)} views, ${fmt(t.replies)} replies (avg ${t.avgViews} views/send)`)
+      .join(" · ");
+    deterministicObs.push(`By type — ${byTypeStr}.`);
+  }
+
+  const aiObs = (narrative.additionalObservations || []).map((o) => escapeHtml(o));
+  const allObs = [...deterministicObs, ...aiObs];
+
+  report.innerHTML = `
+    <section class="panel">
+      <h2 style="margin-top:0;">${escapeHtml(profile.usernames[0] || profile.email)} — Activity Summary</h2>
+      <p class="hint" style="font-size:14px; color: var(--text);">
+        <strong>Email:</strong> ${escapeHtml(profile.email)} ·
+        <strong>Company:</strong> ${escapeHtml(narrative.companyContext || "Not explicit in data")} ·
+        <strong>Plan:</strong> ${planLine(profile)} ·
+        <strong>First activity on file:</strong> ${profile.firstDate} ·
+        <strong>Last activity on file:</strong> ${profile.lastDate}
+      </p>
+    </section>
+
+    <section class="panel">
+      <h3>Overall Stats</h3>
+      <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>${statsRows}</tbody></table>
+    </section>
+
+    <section class="panel">
+      <h3>How They Use Emovid <span class="hint">(AI-generated from real message clusters)</span></h3>
+      ${themesHtml || '<p class="hint">No narrative available.</p>'}
+    </section>
+
+    <section class="panel">
+      <h3>Engagement Highlights <span class="hint">(top 6 by views, exact)</span></h3>
+      <table><thead><tr><th>Date</th><th>Type</th><th>Views</th><th>Plays</th><th>Replies</th></tr></thead><tbody>${engagementRows}</tbody></table>
+    </section>
+
+    <section class="panel">
+      <h3>Key Observations</h3>
+      <ul>${allObs.map((o) => `<li style="margin-bottom:8px;">${o}</li>`).join("")}</ul>
+    </section>
+  `;
+  report.style.display = "block";
+}
+
+lookupBtn.addEventListener("click", async () => {
+  const email = emailInput.value.trim();
+  if (!email) return;
+  statusEl.textContent = "Loading…";
+  lookupBtn.disabled = true;
+  report.style.display = "none";
+  try {
+    const res = await fetch("/api/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Request failed");
+    render(data);
+    statusEl.textContent = "";
+  } catch (err) {
+    statusEl.textContent = `Error: ${err.message}`;
+  } finally {
+    lookupBtn.disabled = false;
+  }
+});
+
+emailInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") lookupBtn.click();
+});
