@@ -2,7 +2,16 @@ const { getStore } = require("@netlify/blobs");
 
 const STORE_NAME = "monthly-csv";
 
+// Netlify normally injects Blobs credentials into functions automatically.
+// If that auto-detection isn't working in this environment (some accounts/
+// deploys hit MissingBlobsEnvironmentError), fall back to explicit
+// credentials via NETLIFY_SITE_ID + NETLIFY_BLOBS_TOKEN env vars.
 function store() {
+  const siteID = process.env.NETLIFY_SITE_ID;
+  const token = process.env.NETLIFY_BLOBS_TOKEN;
+  if (siteID && token) {
+    return getStore({ name: STORE_NAME, siteID, token });
+  }
   return getStore(STORE_NAME);
 }
 
