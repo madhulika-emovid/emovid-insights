@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Upload Data — Emovid Insights</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Emovid Insights</h1>
+    <nav>
+      <a href="index.html">Dashboard</a>
+      <a href="upload.html" class="active">Upload Data</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h3>Add this month's CSV</h3>
+      <p class="hint">Export the monthly usage CSV from Emovid and drop it here. The app detects the month from the "Date (UTC)" column automatically — you can override it below if needed.</p>
+
+      <div id="dropzone" class="dropzone">
+        Drag & drop the CSV here, or click to choose a file
+        <input type="file" id="fileInput" accept=".csv" style="display:none" />
+      </div>
+
+      <div class="filters" style="margin-top:14px;">
+        <label>Month override <input type="month" id="monthOverride" /></label>
+        <button id="uploadBtn" disabled>Upload</button>
+        <span id="status" class="hint"></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Months on file</h3>
+      <div id="monthsList" class="months-list"></div>
+    </section>
+  </main>
+
+  <script src="upload.js"></script>
+</body>
+</html>

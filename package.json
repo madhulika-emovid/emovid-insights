@@ -1,0 +1,12 @@
+{
+  "name": "emovid-insights",
+  "version": "1.0.0",
+  "description": "Netlify app for exploring monthly Emovid usage data via predefined and AI-powered custom questions",
+  "private": true,
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

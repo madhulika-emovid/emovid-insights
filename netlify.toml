@@ -1,0 +1,16 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = "npm install"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Protect the whole site with a single shared password.
+# Set this in Netlify UI -> Site configuration -> Visitor access -> Password protection
+# (that setting doesn't live in this file; kept here only as a reminder).
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
