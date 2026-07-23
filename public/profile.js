@@ -134,3 +134,10 @@ lookupBtn.addEventListener("click", async () => {
 emailInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") lookupBtn.click();
 });
+
+// Support being linked to directly with ?email=someone@example.com
+const prefill = new URLSearchParams(window.location.search).get("email");
+if (prefill) {
+  emailInput.value = prefill;
+  lookupBtn.click();
+}

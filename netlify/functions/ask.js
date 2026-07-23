@@ -10,6 +10,20 @@ function json(status, body) {
   };
 }
 
+const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/;
+const SUMMARY_WORDS = /\b(summar|profile|overview|tell me about|full picture|deep dive|everything about)/i;
+
+// The custom-question box can only ever answer with one metric at a time --
+// it's not built to write a multi-section narrative. When someone clearly
+// wants a full write-up on one person, point them at the Profile page
+// instead of returning a thin, unsatisfying single-number answer.
+function wantsFullUserSummary(question) {
+  const emailMatch = question.match(EMAIL_RE);
+  if (!emailMatch) return null;
+  if (!SUMMARY_WORDS.test(question)) return null;
+  return emailMatch[0];
+}
+
 function distinctValues(rows, field, cap = 12) {
   const set = new Set();
   for (const r of rows) {
@@ -73,6 +87,15 @@ exports.handler = async (event) => {
 
   const question = (payload.question || "").trim();
   if (!question) return json(400, { error: "Missing question" });
+
+  const summaryEmail = wantsFullUserSummary(question);
+  if (summaryEmail) {
+    return json(200, {
+      answer: `This box gives quick numeric answers, not a full write-up. For a detailed activity summary of ${summaryEmail}, use the "User Profile" page and enter that email there.`,
+      redirectTo: "profile",
+      email: summaryEmail,
+    });
+  }
 
   const { rows, months } = await loadDataset();
   if (rows.length === 0) {

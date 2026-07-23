@@ -2,7 +2,6 @@ const grid = document.getElementById("grid");
 const monthsHint = document.getElementById("monthsHint");
 
 const TABLE_QUESTIONS = new Set(["topUsersByVolume"]);
-const charts = {};
 
 async function fetchJSON(url, options) {
   const res = await fetch(url, options);
@@ -32,30 +31,23 @@ function renderTable(container, groups) {
   container.innerHTML = `<table><thead><tr><th>User</th><th>Value</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
+// Simple dependency-free bar chart -- no external JS libraries to load
+// (this replaced a Chart.js/CDN version that some browsers/extensions
+// blocked, causing "Chart is not defined").
 function renderChart(container, id, groups) {
-  container.innerHTML = `<canvas id="chart-${id}"></canvas>`;
-  const ctx = document.getElementById(`chart-${id}`).getContext("2d");
-  if (charts[id]) charts[id].destroy();
-  charts[id] = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: groups.map((g) => g.key),
-      datasets: [
-        {
-          data: groups.map((g) => g.value),
-          backgroundColor: "#6ea8fe",
-          borderRadius: 4,
-        },
-      ],
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: "#9aa0ac" }, grid: { display: false } },
-        y: { ticks: { color: "#9aa0ac" }, grid: { color: "#262b36" } },
-      },
-    },
-  });
+  const max = Math.max(...groups.map((g) => g.value), 1);
+  const rows = groups
+    .map((g) => {
+      const pct = Math.max((g.value / max) * 100, 2);
+      return `
+        <div class="bar-row">
+          <div class="bar-label" title="${g.key}">${g.key}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+          <div class="bar-value">${g.value.toLocaleString()}</div>
+        </div>`;
+    })
+    .join("");
+  container.innerHTML = `<div class="bars">${rows}</div>`;
 }
 
 async function loadQuestion(id, label, filters) {
@@ -120,7 +112,11 @@ document.getElementById("askBtn").addEventListener("click", async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question }),
     });
-    answerBox.textContent = data.answer;
+    if (data.redirectTo === "profile") {
+      answerBox.innerHTML = `${data.answer} <a href="profile.html?email=${encodeURIComponent(data.email)}" style="color: var(--accent);">Open profile →</a>`;
+    } else {
+      answerBox.textContent = data.answer;
+    }
     answerBox.style.display = "block";
     status.textContent = "";
   } catch (err) {
