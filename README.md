@@ -17,7 +17,8 @@ by an LLM (Groq).
   query spec (never raw numbers). That spec is executed against the real
   dataset, and the exact result is what gets phrased back into an answer —
   so the AI can't hallucinate numbers, only pick the wrong query.
-- **User profile report**: the "User Profile" page (`profile.html`) looks up
+- **User profile report**: the "User Profile" page (`index.html` — the
+  default landing page) looks up
   one user by email and shows a full activity write-up. All numbers (totals,
   per-type breakdown, monthly volume, top-engagement table, biggest
   mail-merge blast) are computed in `netlify/functions/_lib/profileEngine.js`
@@ -44,8 +45,8 @@ netlify/functions/
   ask.js      POST { question } -> { answer, spec, result }
   profile.js  POST { email } -> { profile (exact facts), narrative (AI) }
 public/
-  index.html, app.js   Dashboard
-  profile.html, profile.js   User profile report
+  index.html, profile.js   User profile report (default landing page)
+  dashboard.html, app.js   Dashboard
   upload.html, upload.js   Upload page
   style.css
 ```

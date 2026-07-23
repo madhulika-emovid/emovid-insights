@@ -10,12 +10,6 @@ async function fetchJSON(url, options) {
   return data;
 }
 
-function currentFilters() {
-  const monthFrom = document.getElementById("monthFrom").value;
-  const monthTo = document.getElementById("monthTo").value;
-  return { monthFrom: monthFrom || undefined, monthTo: monthTo || undefined };
-}
-
 function card(id, label) {
   const el = document.createElement("div");
   el.className = "panel card";
@@ -50,8 +44,8 @@ function renderChart(container, id, groups) {
   container.innerHTML = `<div class="bars">${rows}</div>`;
 }
 
-async function loadQuestion(id, label, filters) {
-  const body = { questionId: id, ...filters };
+async function loadQuestion(id, label) {
+  const body = { questionId: id };
   const data = await fetchJSON("/api/query", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -70,7 +64,6 @@ async function loadQuestion(id, label, filters) {
 }
 
 async function loadAll() {
-  const filters = currentFilters();
   const { questions } = await fetchJSON("/api/query?list=1");
   grid.innerHTML = "";
   for (const q of questions) {
@@ -78,7 +71,7 @@ async function loadAll() {
   }
   await Promise.all(
     questions.map((q) =>
-      loadQuestion(q.id, q.label, filters).catch((err) => {
+      loadQuestion(q.id, q.label).catch((err) => {
         const container = document.querySelector(`#card-${q.id} .card-body`);
         if (container) container.innerHTML = `<p class="error">${err.message}</p>`;
       })
@@ -96,8 +89,6 @@ async function loadMonths() {
   }
 }
 
-document.getElementById("applyFilters").addEventListener("click", () => loadAll());
-
 document.getElementById("askBtn").addEventListener("click", async () => {
   const question = document.getElementById("question").value.trim();
   const status = document.getElementById("askStatus");
@@ -113,7 +104,7 @@ document.getElementById("askBtn").addEventListener("click", async () => {
       body: JSON.stringify({ question }),
     });
     if (data.redirectTo === "profile") {
-      answerBox.innerHTML = `${data.answer} <a href="profile.html?email=${encodeURIComponent(data.email)}" style="color: var(--accent);">Open profile →</a>`;
+      answerBox.innerHTML = `${data.answer} <a href="index.html?email=${encodeURIComponent(data.email)}" style="color: var(--accent);">Open profile →</a>`;
     } else {
       answerBox.textContent = data.answer;
     }

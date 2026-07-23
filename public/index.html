@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Emovid Insights</title>
+  <title>User Profile — Emovid Insights</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
     <h1>Emovid Insights</h1>
     <nav>
-      <a href="index.html" class="active">Dashboard</a>
-      <a href="profile.html">User Profile</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="index.html" class="active">User Profile</a>
       <a href="upload.html">Upload Data</a>
     </nav>
   </header>
@@ -19,26 +19,15 @@
   <main>
     <section class="panel">
       <div class="filters">
-        <label>From <input type="month" id="monthFrom" /></label>
-        <label>To <input type="month" id="monthTo" /></label>
-        <button id="applyFilters">Apply</button>
-        <span class="hint" id="monthsHint"></span>
+        <label>User email <input type="text" id="emailInput" placeholder="scott@example.com" style="width:280px" /></label>
+        <button id="lookupBtn">Generate Summary</button>
+        <span id="status" class="hint"></span>
       </div>
     </section>
 
-    <section class="panel ask-box">
-      <h3>Ask a custom question</h3>
-      <textarea id="question" placeholder="e.g. Which plan tier sends the most replies? How did page views change from March to May?"></textarea>
-      <div style="margin-top: 10px; display:flex; gap:10px; align-items:center;">
-        <button id="askBtn">Ask</button>
-        <span id="askStatus" class="hint"></span>
-      </div>
-      <div id="answer" class="answer" style="display:none;"></div>
-    </section>
-
-    <section id="grid" class="grid"></section>
+    <section id="report" style="display:none;"></section>
   </main>
 
-  <script src="app.js"></script>
+  <script src="profile.js"></script>
 </body>
 </html>

@@ -76,13 +76,13 @@ function render(data) {
   report.innerHTML = `
     <section class="panel">
       <h2 style="margin-top:0;">${escapeHtml(profile.usernames[0] || profile.email)} — Activity Summary</h2>
-      <p class="hint" style="font-size:14px; color: var(--text);">
-        <strong>Email:</strong> ${escapeHtml(profile.email)} ·
-        <strong>Company:</strong> ${escapeHtml(narrative.companyContext || "Not explicit in data")} ·
-        <strong>Plan:</strong> ${planLine(profile)} ·
-        <strong>First activity on file:</strong> ${profile.firstDate} ·
-        <strong>Last activity on file:</strong> ${profile.lastDate}
-      </p>
+      <ul style="font-size:14px; color: var(--text); margin: 0; padding-left: 20px;">
+        <li><strong>Email:</strong> ${escapeHtml(profile.email)}</li>
+        <li><strong>Company:</strong> ${escapeHtml(narrative.companyContext || "Not explicit in data")}</li>
+        <li><strong>Plan:</strong> ${planLine(profile)}</li>
+        <li><strong>First activity on file:</strong> ${profile.firstDate}</li>
+        <li><strong>Last activity on file:</strong> ${profile.lastDate}</li>
+      </ul>
     </section>
 
     <section class="panel">

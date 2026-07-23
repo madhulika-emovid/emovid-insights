@@ -18,10 +18,6 @@ const CATALOG = {
     label: "Page views & plays per month",
     spec: { groupBy: "month", metric: "sum", metricField: "pageViews", sort: "chrono" },
   },
-  planTierMix: {
-    label: "Activity split: Free vs Paid vs No plan",
-    spec: { groupBy: "planTier", metric: "count", sort: "desc" },
-  },
   planBreakdown: {
     label: "Activity by specific plan",
     spec: { groupBy: "activePlan", metric: "count", sort: "desc" },
@@ -48,10 +44,6 @@ const CATALOG = {
   replyRateOverTime: {
     label: "Total replies per month",
     spec: { groupBy: "month", metric: "sum", metricField: "replies", sort: "chrono" },
-  },
-  livenessOutcomes: {
-    label: "Liveness check outcomes",
-    spec: { groupBy: "livenessStatus", metric: "count", sort: "desc" },
   },
   sendViaBreakdown: {
     label: "How Emovids are sent (link vs in-app)",

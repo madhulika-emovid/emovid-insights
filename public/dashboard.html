@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Emovid Insights</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Emovid Insights</h1>
+    <nav>
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="index.html">User Profile</a>
+      <a href="upload.html">Upload Data</a>
+    </nav>
+  </header>
+
+  <main>
+    <p class="hint" id="monthsHint" style="margin: 0 0 16px;"></p>
+
+    <section class="panel ask-box">
+      <h3>Ask a custom question</h3>
+      <textarea id="question" placeholder="e.g. Which plan tier sends the most replies? How did page views change from March to May?"></textarea>
+      <div style="margin-top: 10px; display:flex; gap:10px; align-items:center;">
+        <button id="askBtn">Ask</button>
+        <span id="askStatus" class="hint"></span>
+      </div>
+      <div id="answer" class="answer" style="display:none;"></div>
+    </section>
+
+    <section id="grid" class="grid"></section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
