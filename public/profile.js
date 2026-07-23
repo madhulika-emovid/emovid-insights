@@ -92,7 +92,12 @@ function render(data) {
 
     <section class="panel">
       <h3>How They Use Emovid <span class="hint">(AI-generated from real message clusters)</span></h3>
-      ${themesHtml || '<p class="hint">No narrative available.</p>'}
+      ${
+        themesHtml ||
+        (narrative.error
+          ? `<p class="error">${escapeHtml(narrative.error)}</p>`
+          : '<p class="hint">No narrative available.</p>')
+      }
     </section>
 
     <section class="panel">
