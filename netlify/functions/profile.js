@@ -1,6 +1,6 @@
 const { loadDataset } = require("./_lib/dataset");
 const { buildProfile, clustersForPrompt } = require("./_lib/profileEngine");
-const { callGemini } = require("./_lib/gemini");
+const { callClaude } = require("./_lib/claude");
 
 function json(status, body) {
   return {
@@ -73,7 +73,7 @@ exports.handler = async (event) => {
 
   let narrative = { companyContext: null, usageThemes: [], additionalObservations: [] };
   try {
-    const raw = await callGemini({
+    const raw = await callClaude({
       system: buildSystemPrompt(profile, clusterSample),
       user: "Write the report sections now.",
       jsonMode: true,

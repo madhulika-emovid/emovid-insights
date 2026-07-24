@@ -2,7 +2,7 @@
 
 A small Netlify app for exploring Emovid's monthly usage exports: a dashboard
 of predefined questions, plus a free-text box for custom questions answered
-by an LLM (Google Gemini, free tier).
+by an LLM (Anthropic's Claude API).
 
 ## How it works
 
@@ -13,7 +13,7 @@ by an LLM (Google Gemini, free tier).
   Emovids sent/month, plan tier mix, top users, etc.) lives in
   `netlify/functions/query.js` and runs directly against your real data.
 - **Custom questions**: `netlify/functions/ask.js` sends your question plus a
-  description of the available fields to Gemini, which returns a small JSON
+  description of the available fields to Claude, which returns a small JSON
   query spec (never raw numbers). That spec is executed against the real
   dataset, and the exact result is what gets phrased back into an answer —
   so the AI can't hallucinate numbers, only pick the wrong query.
@@ -38,7 +38,7 @@ netlify/functions/
     dataset.js      Loads + merges all months, tiny in-memory cache
     queryEngine.js  The filter/groupBy/metric DSL executor
     profileEngine.js Exact per-user stats + message clustering
-    gemini.js       Gemini generateContent helper
+    claude.js       Claude Messages API helper
   upload.js   POST { csvText, filename, month? } -> stores a month's blob
   months.js   GET -> list of months on file
   query.js    GET ?list=1 -> catalog; POST { questionId, monthFrom?, monthTo? } -> result
@@ -53,10 +53,11 @@ public/
 
 ## One-time setup
 
-1. **Get a free Gemini API key**: https://aistudio.google.com/apikey (no
-   credit card needed). Keep this API key in its own Google Cloud project —
-   if you ever enable billing on that project for something else, its free
-   tier disappears and every call becomes billable.
+1. **Get an Anthropic API key**: https://console.anthropic.com -> API Keys.
+   Unlike Gemini/Groq, there's no ongoing free tier -- new accounts get a
+   one-time $5 trial credit, then it's pay-per-token. At this app's usage
+   level (see cost notes below) that's genuinely cheap, likely a few dollars
+   a month at most even without the trial credit.
 2. **Push this folder to a new GitHub repo** (Netlify deploys from git).
 3. **Create a Netlify site from that repo** (app.netlify.com -> Add new site
    -> Import an existing project). Build settings are already in
@@ -64,12 +65,10 @@ public/
 4. **Enable Netlify Blobs**: nothing to do — it's automatically available to
    functions on any Netlify site, no extra setup or add-on needed.
 5. **Set the environment variable**: Site configuration -> Environment
-   variables -> add `GEMINI_API_KEY` with your key. (Optional: `GEMINI_MODEL`
-   to override the default `gemini-3.5-flash`. Google deprecates models for
-   new API users periodically -- if you start seeing 404 "no longer
-   available to new users" errors, check
-   https://ai.google.dev/gemini-api/docs/models for the current stable
-   model name and update this env var.)
+   variables -> add `ANTHROPIC_API_KEY` with your key. (Optional:
+   `ANTHROPIC_MODEL` to override the default `claude-haiku-4-5-20251001` --
+   set it to `claude-sonnet-5` for noticeably better profile-report
+   narrative quality at roughly 3x the per-request cost.)
 6. **Password-protect the site** (since it's just you + a few teammates):
    Site configuration -> Visitor access -> Password protection -> set a
    shared password. This is enough for internal use; skip real auth.
@@ -98,8 +97,9 @@ npx netlify-cli dev
 
 `netlify dev` runs the functions with a local emulation of Netlify Blobs, so
 you can upload a test CSV and try the dashboard/custom questions before
-deploying. You'll still need `GEMINI_API_KEY` set locally (e.g. in a `.env`
-file — `netlify dev` reads it automatically) for the custom-question feature.
+deploying. You'll still need `ANTHROPIC_API_KEY` set locally (e.g. in a
+`.env` file — `netlify dev` reads it automatically) for the custom-question
+feature.
 
 ## Notes / known limits
 
@@ -114,8 +114,12 @@ file — `netlify dev` reads it automatically) for the custom-question feature.
   total), loading everything into memory per request is fine. If the
   dataset grows much larger, swap the Blobs+in-memory approach for a real
   database.
-- Gemini's free tier (as of mid-2026) is roughly 1,500 requests/day and
-  ~1,000,000 tokens/minute for `gemini-3.5-flash` — plenty for a few
-  teammates using the dashboard and profile lookups. If you ever see rate
-  limit errors, they're most likely from the low requests-per-minute cap
-  (~10-15/min), not the daily or token limits.
+- Approximate per-request cost on Claude Haiku 4.5 ($1/$5 per million
+  input/output tokens): a custom question costs about $0.003; a profile
+  lookup costs about $0.002 for a light user up to about $0.013 for a very
+  active one (more message clusters = more input tokens). On Sonnet 5
+  ($3/$15 per million tokens) those roughly triple. Even at 50 lookups/day
+  across a team, that's well under $2/month.
+- There's no ongoing free tier for the Claude API (unlike Gemini/Groq) —
+  budget a few dollars a month, or set a low spend alert in the Anthropic
+  console if that matters to you.

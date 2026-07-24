@@ -1,6 +1,6 @@
 const { loadDataset } = require("./_lib/dataset");
 const { runQuery, GROUPABLE_FIELDS, NUMERIC_FIELDS, METRICS } = require("./_lib/queryEngine");
-const { callGemini } = require("./_lib/gemini");
+const { callClaude } = require("./_lib/claude");
 
 function json(status, body) {
   return {
@@ -106,7 +106,7 @@ exports.handler = async (event) => {
 
   let spec;
   try {
-    const raw = await callGemini({
+    const raw = await callClaude({
       system: buildSystemPrompt(rows, months),
       user: question,
       jsonMode: true,
@@ -128,7 +128,7 @@ exports.handler = async (event) => {
 
   let answer;
   try {
-    answer = await callGemini({
+    answer = await callClaude({
       system:
         "You write a short, direct answer (2-4 sentences max) to the user's question using ONLY the numbers given in the JSON result below. Do not invent any numbers not present in the result. If the result has a 'groups' array, mention the top few entries. Do not restate the raw JSON.",
       user: `Question: ${question}\n\nResult: ${JSON.stringify(result)}`,
