@@ -37,6 +37,25 @@
       <h3>Months on file</h3>
       <div id="monthsList" class="months-list"></div>
     </section>
+
+    <section class="panel">
+      <h3>Add a written summary for a user</h3>
+      <p class="hint">Paste a summary you wrote elsewhere (e.g. using the standalone analysis prompt) for one user's email. It'll show up on their Profile page instead of the "Generate Summary" button — no AI call needed to view it.</p>
+
+      <div class="filters" style="margin-top:8px;">
+        <label>User email <input type="text" id="summaryEmail" placeholder="scott@example.com" style="width:280px" /></label>
+      </div>
+      <textarea id="summaryText" placeholder="Paste the summary text here…" style="width:100%; min-height:140px; margin-top:10px; background:#0f1115; border:1px solid var(--panel-border); color:var(--text); border-radius:6px; padding:10px; font-size:14px; font-family:inherit;"></textarea>
+      <div class="filters" style="margin-top:10px;">
+        <button id="saveSummaryBtn">Save Summary</button>
+        <span id="summaryStatus" class="hint"></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Users with a summary on file</h3>
+      <div id="summariesList" class="months-list"></div>
+    </section>
   </main>
 
   <script src="upload.js"></script>

@@ -68,4 +68,44 @@ uploadBtn.addEventListener("click", async () => {
   }
 });
 
+async function loadSummaries() {
+  const res = await fetch("/api/upload-summary");
+  const { emails } = await res.json();
+  const list = document.getElementById("summariesList");
+  list.innerHTML = emails.length
+    ? emails.map((e) => `<span>${e}</span>`).join("")
+    : '<span class="hint">None yet</span>';
+}
+
+document.getElementById("saveSummaryBtn").addEventListener("click", async () => {
+  const email = document.getElementById("summaryEmail").value.trim();
+  const text = document.getElementById("summaryText").value.trim();
+  const summaryStatus = document.getElementById("summaryStatus");
+  if (!email || !text) {
+    summaryStatus.textContent = "Need both an email and some text.";
+    return;
+  }
+  const btn = document.getElementById("saveSummaryBtn");
+  btn.disabled = true;
+  summaryStatus.textContent = "Saving…";
+  try {
+    const res = await fetch("/api/upload-summary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, text }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Save failed");
+    summaryStatus.textContent = `Saved for ${data.email}.`;
+    document.getElementById("summaryEmail").value = "";
+    document.getElementById("summaryText").value = "";
+    await loadSummaries();
+  } catch (err) {
+    summaryStatus.textContent = `Error: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 loadMonths();
+loadSummaries();

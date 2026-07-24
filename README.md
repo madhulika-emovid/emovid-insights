@@ -18,14 +18,20 @@ by an LLM (Anthropic's Claude API).
   dataset, and the exact result is what gets phrased back into an answer —
   so the AI can't hallucinate numbers, only pick the wrong query.
 - **User profile report**: the "User Profile" page (`index.html` — the
-  default landing page) looks up
-  one user by email and shows a full activity write-up. All numbers (totals,
-  per-type breakdown, monthly volume, top-engagement table, biggest
-  mail-merge blast) are computed in `netlify/functions/_lib/profileEngine.js`
-  directly from the data. Only the "How they use Emovid" theme write-up and a
-  couple of extra qualitative bullets are AI-generated (`profile.js`), and
-  the AI is only ever handed those exact pre-computed numbers plus the raw
-  message clusters — it narrates and groups, it doesn't invent totals.
+  default landing page) looks up one user by email. Loading a profile is
+  always instant and free -- `profile.js` only ever computes exact stats
+  (totals, per-type breakdown, monthly volume, top-engagement table, biggest
+  mail-merge blast) from your data and checks whether a written summary
+  already exists for that email. It never calls Claude automatically.
+- **Summaries are opt-in and cached**: the "How They Use Emovid" section
+  shows a stored plain-text summary if one exists, or a button to create
+  one. There are two ways a summary gets there: (1) click "Generate Summary
+  with Claude" on the profile page, which runs a grounded prompt (real
+  numbers + real message text only, see `_lib/narrative.js`) and caches the
+  result in Netlify Blobs so it's only ever generated once per user unless
+  you regenerate it; or (2) write one yourself (e.g. with the standalone
+  analysis prompt, pasted into any AI chat) and paste it in on the Upload
+  Data page — no Claude API call involved at all for that path.
 
 ## Project layout
 
@@ -38,16 +44,19 @@ netlify/functions/
     dataset.js      Loads + merges all months, tiny in-memory cache
     queryEngine.js  The filter/groupBy/metric DSL executor
     profileEngine.js Exact per-user stats + message clustering
-    claude.js       Claude Messages API helper
-  upload.js   POST { csvText, filename, month? } -> stores a month's blob
-  months.js   GET -> list of months on file
-  query.js    GET ?list=1 -> catalog; POST { questionId, monthFrom?, monthTo? } -> result
-  ask.js      POST { question } -> { answer, spec, result }
-  profile.js  POST { email } -> { profile (exact facts), narrative (AI) }
+    claude.js       Claude Messages API helper (retries on 429/500/503/529)
+    narrative.js    Builds the grounded prompt + converts result to plain text
+  upload.js          POST { csvText, filename, month? } -> stores a month's blob
+  months.js          GET -> list of months on file
+  query.js           GET ?list=1 -> catalog; POST { questionId, monthFrom?, monthTo? } -> result
+  ask.js             POST { question } -> { answer, spec, result }
+  profile.js         POST { email } -> { profile (exact facts), summary (stored, or null) }
+  generate-summary.js POST { email } -> calls Claude, caches + returns { summary }
+  upload-summary.js   GET -> { emails }; POST { email, text } -> stores a manual summary
 public/
   index.html, profile.js   User profile report (default landing page)
   dashboard.html, app.js   Dashboard
-  upload.html, upload.js   Upload page
+  upload.html, upload.js   Upload page + summary upload
   style.css
 ```
 
@@ -123,3 +132,7 @@ feature.
 - There's no ongoing free tier for the Claude API (unlike Gemini/Groq) —
   budget a few dollars a month, or set a low spend alert in the Anthropic
   console if that matters to you.
+- If you only ever plan to use manually-written/pasted summaries (never the
+  "Generate Summary" button), you technically don't need `ANTHROPIC_API_KEY`
+  at all for the profile page -- you'd still need it for the "Ask a custom
+  question" box on the dashboard, since that always calls Claude live.

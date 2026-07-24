@@ -1,6 +1,6 @@
 const { loadDataset } = require("./_lib/dataset");
-const { buildProfile, clustersForPrompt } = require("./_lib/profileEngine");
-const { callClaude } = require("./_lib/claude");
+const { buildProfile } = require("./_lib/profileEngine");
+const { getUserSummary } = require("./_lib/blobs");
 
 function json(status, body) {
   return {
@@ -10,44 +10,11 @@ function json(status, body) {
   };
 }
 
-function buildSystemPrompt(profile, clusterSample) {
-  return `You write the qualitative sections of a per-user Emovid activity report. You are given EXACT, pre-computed facts and a sample of that user's message clusters (each cluster is one distinct message text they sent, with its real send count, date range, and engagement). You must never invent a number that isn't traceable to the facts or clusters given to you. If you group several clusters into one "use case" theme, the volume you cite for that theme must be the sum of the counts of the clusters you assigned to it.
-
-Exact facts:
-${JSON.stringify(
-  {
-    totals: profile.totals,
-    byType: profile.byType,
-    monthly: profile.monthly,
-    peakMonth: profile.peakMonth,
-    peakMonthShare: profile.peakMonthShare,
-    biggestBlast: profile.biggestBlast,
-  },
-  null,
-  2
-)}
-
-Message clusters (count = how many times this exact text was sent):
-${JSON.stringify(clusterSample, null, 2)}
-
-Respond ONLY with a JSON object of this shape:
-{
-  "companyContext": "1 sentence inferring company/role/community from the text, or 'Not explicit in data' if nothing points to one",
-  "usageThemes": [
-    { "name": "short theme name", "sendCount": integer, "description": "1-3 sentences, may quote/paraphrase example message text" }
-  ],
-  "additionalObservations": [
-    "1-2 sentence bullet insight not already covered by the numeric facts you were given verbatim -- qualitative color only"
-  ]
-}
-Keep usageThemes to at most 5, ordered by sendCount descending. Keep additionalObservations to at most 3.
-
-Important: usageThemes must NEVER be empty if at least one message cluster was
-given above. If there's only one cluster, or the clusters don't obviously
-group into multiple themes, just describe the single cluster (or each small
-cluster individually) as its own theme rather than returning an empty list.`;
-}
-
+// This function never calls Claude -- it only computes exact stats and
+// checks for a pre-existing summary (uploaded or previously generated).
+// Generating a fresh AI summary is a separate, explicit action the user
+// triggers from the frontend (see generate-summary.js), so viewing a
+// profile is always instant and free.
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "Use POST" });
 
@@ -68,20 +35,14 @@ exports.handler = async (event) => {
     return json(404, { error: `No activity found for ${email}` });
   }
 
-  const profile = buildProfile(userRows);
-  const clusterSample = clustersForPrompt(profile.clusters);
+  const fullProfile = buildProfile(userRows);
+  // Drop the full cluster list from the response -- it's only needed
+  // server-side (generate-summary.js) to build the AI prompt, and can be
+  // large for very active users. The frontend just needs the rest.
+  const { clusters, ...profile } = fullProfile;
 
-  let narrative = { companyContext: null, usageThemes: [], additionalObservations: [] };
-  try {
-    const raw = await callClaude({
-      system: buildSystemPrompt(profile, clusterSample),
-      user: "Write the report sections now.",
-      jsonMode: true,
-    });
-    narrative = JSON.parse(raw);
-  } catch (err) {
-    narrative.error = `AI narrative unavailable: ${err.message}`;
-  }
+  const stored = await getUserSummary(email);
+  const summary = stored ? { text: stored.text, ...stored.metadata } : null;
 
-  return json(200, { profile, narrative });
+  return json(200, { profile, summary });
 };
